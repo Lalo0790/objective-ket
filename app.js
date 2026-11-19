@@ -1,5 +1,5 @@
 import * as db from './db.js';
-import { SKILLS, SLOTS, planInfo, weekStart, reviewDate, weekOf, weekMeta, exercisesOf, findExercise, addDays, todayISO, diffDays, ROADMAP } from './plan.js';
+import { SKILLS, SLOTS, planInfo, weekStart, weekEnd, reviewDate, weekOf, weekMeta, exercisesOf, findExercise, addDays, todayISO, diffDays, ROADMAP } from './plan.js';
 import { renderTask, bindTask, allItems } from './tasks.js';
 import { $, $$, esc, toast, icons, fmtDate, fmtGrade, wordCount } from './ui.js';
 
@@ -55,7 +55,8 @@ function loginView(){
 function exRow(ex){
   const s = subFor(ex.id); const open = isOpen(ex); const col = SKILLS[ex.skill].color;
   const st = s ? (s.auto_max ? `${s.auto_score}/${s.auto_max}` : 'Enviado') : open ? `${ex.mins} min` : '🔒';
-  const sub = s ? `${ex.slotLabel}` : open ? `${fmtDate(ex.date)} · ${ex.slotLabel}` : `Se abre el ${fmtDate(ex.date)}`;
+  const today = todayISO(); const when = ex.suggest ? (ex.suggest <= today ? 'Disponible hoy' : `Sugerido: ${fmtDate(ex.suggest)}`) : (ex.date === today ? 'Hoy' : fmtDate(ex.date));
+  const sub = s ? `${ex.slotLabel}` : open ? `${when} · ${ex.slotLabel}` : `Se abre el ${fmtDate(ex.date)}`;
   const inner = `<span class="dot" style="background:${col}">${SKILLS[ex.skill].abbr}</span><span class="meta"><div class="t">${esc(ex.title)}</div><div class="s">${esc(sub)}</div></span><span class="st ${s?'done':''}">${s ? '✓ ' : ''}${st}</span>`;
   return `<li>${open ? `<a class="task" href="#/task/${ex.id}">${inner}</a>` : `<div class="task locked">${inner}</div>`}</li>`;
 }
@@ -108,7 +109,7 @@ async function taskView(taskId){
 function weekView(w){
   const st = S.settings; const { weeks } = planInfo(st); if (!(w >= 1 && w <= weeks)) return planView();
   const meta = weekMeta(w); const exs = exercisesOf(st, w);
-  shell(`<div class="wrap"><div class="taskhead"><a class="back" href="#/plan">${icons.left} Plan</a><h1>Semana ${w} · ${esc(meta.theme)}</h1><p class="sub">${fmtDate(weekStart(st,w), false)} – ${fmtDate(addDays(weekStart(st,w),6), false)} · ${esc(meta.level)} · revisión el ${fmtDate(reviewDate(st,w))}</p></div>
+  shell(`<div class="wrap"><div class="taskhead"><a class="back" href="#/plan">${icons.left} Plan</a><h1>Semana ${w} · ${esc(meta.theme)}</h1><p class="sub">${fmtDate(weekStart(st,w), false)} – ${fmtDate(weekEnd(st,w), false)} · ${esc(meta.level)} · revisión el ${fmtDate(reviewDate(st,w))}</p></div>
   ${meta.ready ? `${meta.focus ? `<div class="instr">${esc(meta.focus)}</div>` : ''}<div class="card daycard"><ul class="tasklist">${exs.map(exRow).join('')}</ul></div>` : '<div class="card empty">Esta semana todavía se está preparando. ✏️</div>'}</div>`, 'plan');
 }
 function planView(){
@@ -163,7 +164,7 @@ async function teacherWeekView(w){
   let days = '';
   for (const e of exs){ const s = subFor(e.id);
     days += `<section class="daysec"><h3>${fmtDate(e.date)} <span class="chip">${esc(e.slotLabel)}</span></h3>`;
-    if (!s){ days += `<div class="sub-card" style="opacity:.75"><div class="row between"><span>${skillChips(e)} <b>${esc(e.title)}</b></span><a class="btn small ghost" href="#/task/${e.id}">Ver ejercicio</a></div><div class="missing mt">${e.date <= todayISO() ? 'No entregado' : 'Pendiente'}</div></div></section>`; continue; }
+    if (!s){ days += `<div class="sub-card" style="opacity:.75"><div class="row between"><span>${skillChips(e)} <b>${esc(e.title)}</b></span><a class="btn small ghost" href="#/task/${e.id}">Ver ejercicio</a></div><div class="missing mt">${todayISO() > weekEnd(st, w) ? 'No entregado' : 'Pendiente'}</div></div></section>`; continue; }
     const f = fbFor(s) || {};
     const wrong = (s.answers?.items || []).filter(it => !it.ok);
     const items = s.answers?.items ? `<details class="mt"><summary class="small"><b>${s.auto_score}/${s.auto_max}</b> correctas · ver ${wrong.length} errores</summary><table class="items">${wrong.map(it => `<tr><td>✗</td><td>${esc(it.q)}</td><td class="noc">${esc(it.given || '—')}</td><td class="muted">${esc(it.correct)}</td></tr>`).join('') || '<tr><td>🎉 Sin errores</td></tr>'}</table></details>` : '';
@@ -198,8 +199,8 @@ async function teacherWeekView(w){
 }
 function teacherSettingsView(){
   const st = S.settings; const days = (st.study_days || [1,3,4]).map(Number); const NAMES = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
-  shell(`<div class="wrap"><div class="taskhead"><a class="back" href="#/t">${icons.left} Panel</a><h1>Ajustes del plan</h1><p class="sub">Las semanas van de lunes a domingo. La revisión es el viernes. Si cambias fechas, las semanas se reacomodan.</p></div>
-  <form class="card" id="sf"><label class="field"><span>Fecha de inicio (se usa el lunes de esa semana)</span><input class="input" type="date" name="start_date" value="${st.start_date}" required></label>
+  shell(`<div class="wrap"><div class="taskhead"><a class="back" href="#/t">${icons.left} Panel</a><h1>Ajustes del plan</h1><p class="sub">Las semanas van de lunes a domingo y la revisión es el viernes. Si el inicio cae a media semana, la semana 1 es más larga: la primera revisión es el viernes de la semana siguiente. Si cambias fechas, las semanas se reacomodan.</p></div>
+  <form class="card" id="sf"><label class="field"><span>Fecha de inicio</span><input class="input" type="date" name="start_date" value="${st.start_date}" required></label>
   <label class="field"><span>Fecha del examen</span><input class="input" type="date" name="exam_date" value="${st.exam_date}" required></label>
   <label class="row small" style="margin-bottom:10px"><input type="checkbox" name="exam_tentative" ${st.exam_tentative ? 'checked' : ''}> La fecha del examen es tentativa</label>
   <div class="field"><span>Días de estudio (elige 3: Reading & Writing · Listening · Speaking)</span><div class="row">${NAMES.map((n,i)=>`<label class="pill ${days.includes(i+1)?'on':''}" style="display:inline-flex;gap:6px;align-items:center"><input type="checkbox" name="d${i+1}" ${days.includes(i+1)?'checked':''}> ${n}</label>`).join('')}</div></div>

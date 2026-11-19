@@ -37,11 +37,12 @@ def do_task(p, tid, shot=None, shot_before=None):
 with sync_playwright() as pl:
     b = pl.chromium.launch(executable_path='/usr/bin/google-chrome', headless=True, args=['--use-fake-ui-for-media-stream','--use-fake-device-for-media-stream','--autoplay-policy=no-user-gesture-required'])
     # --- Friday of week 1: Agustín finished week 1 (all 3 exercises)
-    st = mk(b, '2026-12-04T16:00:00'); login(st, 'agustin')
-    st.screenshot(path='/tmp/t-home-before.png')
+    st = mk(b, '2026-11-19T07:30:00'); login(st, 'agustin')
+    st.wait_for_selector('.daycard'); st.screenshot(path=SHOTS+'00-home-today-thursday.png')
+    st.goto(BASE + '#/plan'); st.wait_for_selector('.weekcard'); time.sleep(.5); st.screenshot(path=SHOTS+'00b-plan-today.png'); st.goto(BASE + '#/')
     for t in ['w1-a','w1-b','w1-c']: do_task(st, t)
     # --- Teacher reviews week 1
-    te = mk(b, '2026-12-04T18:00:00', mobile=False); login(te, 'eduardo'); te.goto(BASE + '#/t/week/1'); te.wait_for_selector('.sub-card'); time.sleep(0.8)
+    te = mk(b, '2026-11-27T18:00:00', mobile=False); login(te, 'eduardo'); te.goto(BASE + '#/t/week/1'); te.wait_for_selector('.sub-card'); time.sleep(0.8)
     cards = te.query_selector_all('.sub-card[data-sub]'); print('teacher sees', len(cards), 'submissions')
     texts = ['Muy bien, Agustín. Tu tarjeta está clara. Solo recuerda la mayúscula en tu nombre: "My name is Agustín".','','Se te entiende bien. Repite "twelve" y "eleven" despacio, la "v" es muy importante.']
     for c, txt in zip(cards, texts):
@@ -56,7 +57,7 @@ with sync_playwright() as pl:
     te.click('#rf button[type=submit]'); time.sleep(1.2)
     te.screenshot(path=SHOTS+'teacher-weekly-review.png', full_page=False)
     # --- Student, Tuesday of week 2: home, an exercise, feedback
-    s2 = mk(b, '2026-12-08T17:00:00'); login(s2, 'agustin'); s2.wait_for_selector('.daycard'); time.sleep(0.8)
+    s2 = mk(b, '2026-12-01T17:00:00'); login(s2, 'agustin'); s2.wait_for_selector('.daycard'); time.sleep(0.8)
     s2.screenshot(path=SHOTS+'01-home.png')
     s2.goto(BASE + '#/task/w2-a'); s2.wait_for_selector('#task'); time.sleep(0.8); s2.screenshot(path=SHOTS+'02-exercise-reading.png')
     s2.goto(BASE + '#/task/w1-b'); s2.wait_for_selector('#task'); time.sleep(0.8); s2.evaluate('window.scrollTo(0, 340)'); time.sleep(0.4); s2.screenshot(path=SHOTS+'03-exercise-listening-done.png')
@@ -64,6 +65,6 @@ with sync_playwright() as pl:
     s2.goto(BASE + '#/plan'); s2.wait_for_selector('.weekcard'); time.sleep(0.6); s2.screenshot(path=SHOTS+'05-plan.png')
     s2.goto(BASE + '#/progress'); time.sleep(0.8); s2.screenshot(path=SHOTS+'06-progress.png')
     # speaking exercise (before) for a screenshot
-    s3 = mk(b, '2026-12-10T17:00:00'); login(s3, 'agustin'); s3.goto(BASE + '#/task/w2-c'); s3.wait_for_selector('#task'); time.sleep(0.6); s3.screenshot(path=SHOTS+'07-exercise-speaking.png')
+    s3 = mk(b, '2026-12-03T17:00:00'); login(s3, 'agustin'); s3.goto(BASE + '#/task/w2-c'); s3.wait_for_selector('#task'); time.sleep(0.6); s3.screenshot(path=SHOTS+'07-exercise-speaking.png')
     b.close()
 print('page errors:', errors[:5])

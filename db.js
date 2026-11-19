@@ -5,7 +5,7 @@ let sb = null, mode = 'local';
 const LS = 'ket-local-v1';
 const local = () => JSON.parse(localStorage.getItem(LS) || '{"settings":null,"subs":[],"fb":{},"reviews":[],"user":null}');
 const saveLocal = (s) => localStorage.setItem(LS, JSON.stringify(s));
-const defaultSettings = () => ({ id:1, student_id:'local-student', start_date:'2026-11-30', exam_date:'2027-05-01', exam_tentative:true, study_days:[1,3,4], exam_kind:'schools' });
+const defaultSettings = () => ({ id:1, student_id:'local-student', start_date:'2026-11-19', exam_date:'2027-05-01', exam_tentative:true, study_days:[1,3,4], exam_kind:'schools' });
 
 export async function init(){
   if (CONFIG.SUPABASE_URL && CONFIG.SUPABASE_ANON_KEY){

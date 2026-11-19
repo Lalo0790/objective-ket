@@ -18,7 +18,7 @@ $$;
 create table if not exists public.ket_settings (
   id int primary key default 1 check (id = 1),
   student_id uuid references auth.users(id),
-  start_date date not null default date '2026-11-30',
+  start_date date not null default date '2026-11-19',
   exam_date date not null default date '2027-05-01',
   exam_tentative boolean not null default true,
   study_days int[] not null default '{1,3,4}',
