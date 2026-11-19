@@ -6,9 +6,9 @@ export default {
     a:{ title:'Three hobbies + an email about me', mins:19, sections:[
       { type:'match', title:'Who is it?', part_label:'Reading Part 2', es:'Lee los tres textos. Cada pregunta habla de una persona. Toca A, B o C.',
         texts:[
-          { h:'A · Nico, 13', t:'I play football for my school team. We practise on Tuesdays and Thursdays, and we have a match every Saturday. I want to be a goalkeeper because I love jumping and catching the ball. I never play video games before a match – I go to bed early!' },
+          { h:'A · Nico, 11', t:'I play football for my school team. We practise on Tuesdays and Thursdays, and we have a match every Saturday. I want to be a goalkeeper because I love jumping and catching the ball. I never play video games before a match – I go to bed early!' },
           { h:'B · Carla, 12', t:'My hobby is drawing. I draw cartoon animals in a small notebook and I put some of them on Instagram. Sometimes my grandad gives me new pens for my birthday. One day I want to make my own comic book.' },
-          { h:'C · Jamie, 14', t:'I\'m learning the drums. My neighbours don\'t like it, so I only play on Sunday afternoons! I have lessons with a teacher once a week. After my lesson I usually go to the café with my cousin and we have a milkshake.' },
+          { h:'C · Jamie, 12', t:'I\'m learning the drums. My neighbours don\'t like it, so I only play on Sunday afternoons! I have lessons with a teacher once a week. After my lesson I usually go to the café with my cousin and we have a milkshake.' },
         ],
         items:[
           { q:'Who plays in a team?', a:0 },
@@ -36,7 +36,7 @@ export default {
           ['Man','And your surname?'],
           ['Girl','It\'s Wilkins. W, I, L, K, I, N, S.'],
           ['Man','Thanks. How old are you, Hannah?'],
-          ['Girl','I\'m thirteen.'],
+          ['Girl','I\'m twelve.'],
           ['Man','What activity would you like to do?'],
           ['Girl','I\'d like to do photography, please.'],
           ['Man','OK. That\'s on Wednesdays, at half past five.'],
@@ -45,7 +45,7 @@ export default {
         ] }],
         heading:'Westfield Youth Club',
         lines:['Surname: [[1]]','Age: [[2]]','Activity: [[3]]','Day: [[4]]','Cost per month: £[[5]]'],
-        answers:[['Wilkins'],['13','thirteen'],['photography'],['Wednesday','Wednesdays'],['8','eight']] },
+        answers:[['Wilkins'],['12','twelve'],['photography'],['Wednesday','Wednesdays'],['8','eight']] },
       { type:'lmatch', title:'Who does what at the weekend?', audio:'audio/w6-b2.mp3', audioTitle:'Weekend plans', es:'Escucha a dos amigos. Une cada persona con la actividad que va a hacer (A–H). Sobran tres opciones.',
         speakers:{ Sam:'M', Kate:'F' },
         script:[{ lines:[
@@ -67,7 +67,7 @@ export default {
       { type:'speak', part:2, title:'Talk about free time', cards:[{e:'⚽',cap:'play football'},{e:'🎮',cap:'play video games'},{e:'📚',cap:'read books'},{e:'🎨',cap:'draw'},{e:'🚲',cap:'ride a bike'}],
         intro:'Look at the pictures. Say what you like and what you don\'t like. Say why. Then say which one is your favourite.',
         es:'Mira los dibujos. Di qué te gusta hacer y qué no, y por qué. Al final dime cuál es tu favorito. Graba todo en un solo audio.',
-        qs:['What do you do at the weekend?','How often do you play video games?'],
+        qs:['What do you do at the weekend?','How often do you play video games?','What is your favourite sport or game?'],
         useful:['I like playing football because it\'s fun.','I don\'t like reading. It\'s boring.','I always / usually / sometimes / never …','My favourite is … because …'] },
       { type:'quiz', title:'Words and little grammar', es:'Elige o escribe la palabra correcta.',
         items:[

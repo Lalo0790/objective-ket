@@ -5,12 +5,12 @@ export default {
   tasks:{
     a:{ title:'Saturday at the café + an email to Ben', mins:20, sections:[
       { type:'mcq', title:'Read the text and choose A, B or C', part_label:'Reading Part 3', es:'Lee el texto con calma. Después contesta las 5 preguntas. No necesitas entender todas las palabras.',
-        textTitle:'My Saturday job',
-        text:'My uncle Tony has a small café near our school. On Saturdays I help him from nine until one. I wash cups, carry plates and sometimes I make sandwiches.\nMy favourite job is making hot chocolate, because I can put lots of cream on top! The café opens at eight and it\'s always busy at lunchtime. Lots of students come after school for a slice of pizza.\nTony never lets me touch the coffee machine. He says it\'s too difficult. I don\'t get any money, but I get a free lunch. Next month I\'m going to learn to make cakes. I can\'t wait!',
+        textTitle:'Saturdays at the café',
+        text:'My uncle Tony has a small café near our school. On Saturdays I help him from nine until one. I wash cups, carry plates and sometimes I make sandwiches.\nMy favourite job is making hot chocolate, because I can put lots of cream on top! The café opens at eight and it\'s always busy at lunchtime. Lots of kids from my school come after lessons for a slice of pizza.\nTony never lets me touch the coffee machine. He says it\'s too difficult. I don\'t get any money, but I get a free lunch. Next month I\'m going to learn to make cakes. I can\'t wait!',
         items:[
           { q:'When does the writer help in the café?', o:['On Saturday mornings','Every day after school','On Saturday afternoons'], a:0 },
           { q:'What does the writer like doing best?', o:['Washing cups','Making hot chocolate','Making sandwiches'], a:1 },
-          { q:'Who comes to the café after school?', o:['Teachers','Tony\'s friends','Students'], a:2 },
+          { q:'Who comes to the café after lessons?', o:['Teachers','Tony\'s friends','School kids'], a:2 },
           { q:'Why can\'t the writer use the coffee machine?', o:['It is broken.','Tony says it is too difficult.','The writer is afraid of it.'], a:1 },
           { q:'What is the writer going to learn next month?', o:['To make cakes','To make pizza','To make coffee'], a:0 },
         ] },

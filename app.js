@@ -79,7 +79,7 @@ function homeView(){
     if (missed.length) main += `<div class="card flat"><h3>Pendientes de semanas anteriores</h3><p class="sub small">Cuando puedas, ponte al corriente.</p><ul class="tasklist">${missed.slice(-6).map(e => `<li><a class="task" href="#/task/${e.id}"><span class="dot" style="background:${SKILLS[e.skill].color}">${SKILLS[e.skill].abbr}</span><span class="meta"><div class="t">Sem ${e.week} · ${esc(e.title)}</div><div class="s">${esc(e.slotLabel)}</div></span><span class="st">Abrir</span></a></li>`).join('')}</ul></div>`;
   }
   const doneAll = S.subs.length; const streak = weeksDoneStreak();
-  shell(`<div class="wrap"><section class="hero"><span class="eyebrow">${fmtDate(t)}</span><div class="hello">${greet}, <em>${esc(name)}</em>!</div><p class="sub">Meta: Cambridge A2 Key (KET) · ${esc(examLabel())}</p></section>
+  shell(`<div class="wrap"><section class="hero"><span class="eyebrow">${fmtDate(t)}</span><div class="hello">${greet}, <em>${esc(name)}</em>!</div><p class="sub">Meta: Cambridge A2 Key${S.settings.exam_kind === 'standard' ? '' : ' for Schools'} (KET) · ${esc(examLabel())}</p></section>
   <div class="stats"><div class="stat flame"><div class="k">Semanas</div><div class="v">${streak}<small> seguidas</small></div></div><div class="stat"><div class="k">Hechos</div><div class="v">${doneAll}</div></div><div class="stat"><div class="k">Examen</div><div class="v">${daysLeft > 0 ? daysLeft : 0}<small> días</small></div></div></div>
   ${main}</div>`, 'home');
 }
@@ -203,7 +203,7 @@ function teacherSettingsView(){
   <label class="field"><span>Fecha del examen</span><input class="input" type="date" name="exam_date" value="${st.exam_date}" required></label>
   <label class="row small" style="margin-bottom:10px"><input type="checkbox" name="exam_tentative" ${st.exam_tentative ? 'checked' : ''}> La fecha del examen es tentativa</label>
   <div class="field"><span>Días de estudio (elige 3: Reading & Writing · Listening · Speaking)</span><div class="row">${NAMES.map((n,i)=>`<label class="pill ${days.includes(i+1)?'on':''}" style="display:inline-flex;gap:6px;align-items:center"><input type="checkbox" name="d${i+1}" ${days.includes(i+1)?'checked':''}> ${n}</label>`).join('')}</div></div>
-  <label class="field"><span>Examen</span><select class="input" name="exam_kind"><option value="schools" ${st.exam_kind!=='standard'?'selected':''}>A2 Key for Schools</option><option value="standard" ${st.exam_kind==='standard'?'selected':''}>A2 Key</option></select></label>
+  <label class="field"><span>Examen</span><select class="input" name="exam_kind"><option value="schools" ${st.exam_kind!=='standard'?'selected':''}>A2 Key for Schools (recomendado a los 11–12 años)</option><option value="standard" ${st.exam_kind==='standard'?'selected':''}>A2 Key</option></select></label>
   <button class="btn coral block mt" type="submit">Guardar ajustes</button></form></div>`, '');
   $$('#sf input[type=checkbox][name^=d]').forEach(c => c.addEventListener('change', () => c.closest('.pill').classList.toggle('on', c.checked)));
   $('#sf').onsubmit = async (e) => { e.preventDefault(); const fd = new FormData(e.target); const f = Object.fromEntries(fd);
