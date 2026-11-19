@@ -59,7 +59,7 @@ with sync_playwright() as pl:
     s2 = mk(b, '2026-12-08T17:00:00'); login(s2, 'agustin'); s2.wait_for_selector('.daycard'); time.sleep(0.8)
     s2.screenshot(path=SHOTS+'01-home.png')
     s2.goto(BASE + '#/task/w2-a'); s2.wait_for_selector('#task'); time.sleep(0.8); s2.screenshot(path=SHOTS+'02-exercise-reading.png')
-    s2.goto(BASE + '#/task/w1-b'); s2.wait_for_selector('#task'); time.sleep(0.8); s2.evaluate('window.scrollTo(0, 260)'); time.sleep(0.4); s2.screenshot(path=SHOTS+'03-exercise-listening-done.png')
+    s2.goto(BASE + '#/task/w1-b'); s2.wait_for_selector('#task'); time.sleep(0.8); s2.evaluate('window.scrollTo(0, 340)'); time.sleep(0.4); s2.screenshot(path=SHOTS+'03-exercise-listening-done.png')
     s2.goto(BASE + '#/feedback'); s2.wait_for_selector('.card'); time.sleep(0.8); s2.screenshot(path=SHOTS+'04-feedback.png')
     s2.goto(BASE + '#/plan'); s2.wait_for_selector('.weekcard'); time.sleep(0.6); s2.screenshot(path=SHOTS+'05-plan.png')
     s2.goto(BASE + '#/progress'); time.sleep(0.8); s2.screenshot(path=SHOTS+'06-progress.png')
