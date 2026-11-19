@@ -1,0 +1,68 @@
+// Week 3 · My day (A1)
+export default {
+  week:3, theme:'My day: school and free time', level:'A1',
+  focus:'Esta semana: la hora, la rutina y los días. Presente simple (I get up, she goes). Leemos mensajes de texto cortos como en el examen.',
+  tasks:{
+    a:{ title:'Short messages + what I do after school', mins:18, sections:[
+      { type:'signs', title:'What does the message say?', part_label:'Reading Part 1', es:'Lee el mensaje o letrero. Elige la frase que dice lo mismo.',
+        items:[
+          { s:'Hi Dan! Football practice is at 4.30 now, not 5.00.\nSee you at the gate. – Coach Rob', o:['Practice is half an hour earlier.','Practice is at five.','Dan must meet Rob at home.'], a:0 },
+          { s:'Can you buy milk on your way home?\nThe money is on the table. Mum', o:['Mum wants some milk.','Mum is buying milk.','The milk is on the table.'], a:0 },
+          { s:'LIBRARY CLOSED ON FRIDAY\nPlease bring your books back on Thursday.', o:['Bring your books on Friday.','You can\'t go to the library on Friday.','The library is closed on Thursday.'], a:1 },
+          { s:'Lucy, I can\'t come today. Dentist at 3!\nCall you later. Emma', o:['Emma is going to the dentist.','Emma is coming at three.','Lucy is going to the dentist.'], a:0 },
+          { s:'Please do not run near the pool.', o:['You can run here.','Walk near the pool.','The pool is closed.'], a:1 },
+          { s:'Dinner\'s ready! Come downstairs now. Dad', o:['Dad wants you to eat.','Dad is making dinner later.','Dad is upstairs.'], a:0 },
+        ] },
+      { type:'write', title:'A message to a friend', min:20, es:'Tu amigo te pregunta: "What do you do after school?" Contesta con 3 cosas que haces. Usa "I" + verbo.',
+        prompt:'Your friend Sam asks: "What do you do after school?" Write him a short message. Say three things.',
+        example:'Hi Sam! After school I go home and have lunch. Then I do my homework. At six I play video games with my brother. What about you?',
+        tips:['I go home / I have lunch / I do my homework','I play football / I watch TV / I read','At four o\'clock … / Then … / After that …'] },
+    ] },
+    b:{ title:'Times and a voice message', mins:16, sections:[
+      { type:'lpics', title:'Listen and choose the picture', audio:'audio/w3-b1.mp3', audioTitle:'5 short conversations', es:'Escucha 5 conversaciones y elige la imagen correcta.',
+        speakers:{ Girl:'F', Jack:'M', Ella:'F', Boy:'M', Woman:'F', Tom:'M', Sara:'F', Man:'M' },
+        script:[
+          { lines:[['Girl','What time do you get up, Jack?'],['Jack','On school days I get up at half past seven.'],['Girl','Wow, that\'s early.']] },
+          { lines:[['Boy','Do you have swimming today, Ella?'],['Ella','No, that\'s on Tuesday. Today I\'ve got piano.'],['Boy','Cool. Have fun!']] },
+          { lines:[['Woman','When is the school trip?'],['Boy','On Wednesday, not Friday. They changed it.'],['Woman','Oh, thanks for telling me.']] },
+          { lines:[['Woman','What do you have for breakfast, Tom?'],['Tom','Toast with jam. And orange juice.'],['Woman','That sounds good.']] },
+          { lines:[['Man','Do you take the bus to school, Sara?'],['Sara','No, it\'s too far to walk, so my dad takes me in the car.'],['Man','Lucky you!']] },
+        ],
+        items:[
+          { q:'What time does Jack get up?', o:[{e:'🕖',t:'7:00'},{e:'🕢',t:'7:30'},{e:'🕗',t:'8:00'}], a:1 },
+          { q:'What does Ella do today?', o:[{e:'🏊',t:'swimming'},{e:'⚽',t:'football'},{e:'🎹',t:'piano'}], a:2 },
+          { q:'When is the school trip?', o:[{e:'📅',t:'Monday'},{e:'📅',t:'Wednesday'},{e:'📅',t:'Friday'}], a:1 },
+          { q:'What does Tom have for breakfast?', o:[{e:'🥣',t:'cereal'},{e:'🍞',t:'toast'},{e:'🥞',t:'pancakes'}], a:1 },
+          { q:'How does Sara go to school?', o:[{e:'🚌',t:'by bus'},{e:'🚗',t:'by car'},{e:'🚲',t:'by bike'}], a:1 },
+        ] },
+      { type:'lgap', title:'Listen and write', audio:'audio/w3-b2.mp3', audioTitle:'A message from the English club', es:'Es un mensaje de voz de una maestra. Escribe lo que falta. Los nombres se deletrean: escucha las letras.',
+        speakers:{ Teacher:'F' },
+        script:[{ lines:[
+          ['Teacher','Hello Max, this is Mrs Hart from the English club. That\'s H, A, R, T.'],
+          ['Teacher','The club meets on Tuesday this week, not Thursday.'],
+          ['Teacher','We start at a quarter to four. That\'s three forty-five.'],
+          ['Teacher','We\'re in Room twelve, next to the library.'],
+          ['Teacher','Please bring a pen and your dictionary. See you on Tuesday!'],
+        ] }],
+        heading:'English club',
+        lines:['Teacher: Mrs [[1]]','Day: [[2]]','Time: [[3]]','Room: [[4]]','Bring: a pen and a [[5]]'],
+        answers:[['Hart'],['Tuesday'],['3.45','3:45','345','3 45','quarter to four','a quarter to four','three forty five','three forty-five'],['12','twelve'],['dictionary']] },
+    ] },
+    c:{ title:'My day + Words', mins:16, sections:[
+      { type:'speak', part:1, title:'Answer the questions', es:'Graba tus respuestas en un solo audio. Di una frase completa por pregunta.',
+        qs:['What time do you get up?','What do you have for breakfast?','How do you go to school?','What do you do after school?','Tell me something about your favourite day.'],
+        useful:['I get up at … o\'clock.','I have … for breakfast.','I go to school by bus / car / on foot.','After school I …','My favourite day is … because …'] },
+      { type:'quiz', title:'Words and little grammar', es:'Elige o escribe la palabra correcta.',
+        items:[
+          { q:'She ___ breakfast at seven.', o:['have','has','having'], a:1 },
+          { q:'What time ___ you get up?', o:['do','does','are'], a:0 },
+          { q:'He ___ to school by bus.', o:['go','goes','going'], a:1 },
+          { q:'I ___ like tomatoes.', o:['don\'t','doesn\'t','not'], a:0 },
+          { q:'It\'s 7.15. It\'s a quarter ___ seven.', g:['past'] },
+          { q:'It\'s 6.30. It\'s half ___ six.', g:['past'] },
+          { q:'Saturday and ___ are the weekend.', g:['Sunday'] },
+          { q:'Monday, ___, Wednesday', g:['Tuesday'] },
+        ] },
+    ] },
+  },
+};
