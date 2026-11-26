@@ -1,5 +1,6 @@
-// Builds the weekly plan: 3 exercises per week (Reading & Writing / Listening / Speaking), review every Friday.
-import { WEEKS } from './content/index.js';
+// Builds the weekly plan: 3 exercises per week by default (Reading & Writing / Listening / Speaking),
+// or 5 when the student has exercises_per_week=5 (adds Reading + Writing & Words). Review every Friday.
+import { WEEKS } from './content/index.js?v=2';
 
 export const SKILLS = {
   reading:{label:'Reading',color:'var(--c-read)',abbr:'R'},
@@ -12,6 +13,14 @@ export const SLOTS = [
   { slot:'b', skill:'listening', skills:['listening'], label:'Listening' },
   { slot:'c', skill:'speaking', skills:['speaking'], label:'Speaking & Words' },
 ];
+export const EXTRA_SLOTS = [
+  { slot:'d', skill:'reading', skills:['reading'], label:'Reading' },
+  { slot:'e', skill:'writing', skills:['writing'], label:'Writing & Words' },
+];
+export function slotsOf(settings){
+  return (Number(settings?.exercises_per_week) === 5) ? [...SLOTS, ...EXTRA_SLOTS] : SLOTS;
+}
+export const defaultStudyDays = settings => (Number(settings?.exercises_per_week) === 5) ? [1,2,3,4,5] : [1,3,4];
 
 export const toISO = d => { const x = new Date(d); return `${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,'0')}-${String(x.getDate()).padStart(2,'0')}`; };
 export const parseISO = s => { const [y,m,d] = s.split('-').map(Number); return new Date(y, m-1, d); };
@@ -49,15 +58,20 @@ export function weekMeta(w){
 }
 export function exercisesOf(settings, w){
   const c = WEEKS[w-1]; const ws = weekStart(settings, w);
-  const days = [...(settings.study_days || [1,3,4])].map(Number).sort((a,b)=>a-b);
+  const slots = slotsOf(settings);
+  const days = [...(settings.study_days?.length ? settings.study_days : defaultStudyDays(settings))].map(Number).sort((a,b)=>a-b);
   const first = w === 1 && isoWeekday(settings.start_date) !== 1; // long first week: everything opens on the start date
   const we = weekEnd(settings, w);
   const study = []; for (let d = ws; d <= we; d = addDays(d, 1)) if (days.includes(isoWeekday(d))) study.push(d);
-  return SLOTS.map((S, i) => {
+  const openList = first ? [ws, ...study.filter(d => d > ws)] : study;
+  return slots.map((S, i) => {
     const ex = c?.tasks?.[S.slot];
-    const sug = first ? [ws, ...study.filter(d => d > ws)][i] : addDays(ws, ((days[i] ?? [1,3,4][i]) - isoWeekday(ws)));
+    const dayIdx = i < openList.length ? i : openList.length - 1;
+    const sug = first
+      ? (openList[dayIdx] || ws)
+      : addDays(ws, ((days[i] ?? days[days.length-1] ?? 4) - isoWeekday(ws)));
     const date = first ? ws : sug;
     return { id:`w${w}-${S.slot}`, week:w, slot:S.slot, skill:S.skill, skills:S.skills, slotLabel:S.label, date, suggest:first ? sug : null, ready:!!ex, level:c?.level, theme:c?.theme, ...(ex||{ title:S.label, mins:18, sections:[] }) };
   });
 }
-export function findExercise(settings, taskId){ const m = /^w(\d+)-([abc])$/.exec(taskId||''); if (!m) return null; const w = Number(m[1]); if (w < 1 || w > planInfo(settings).weeks) return null; return exercisesOf(settings, w).find(e => e.slot === m[2]); }
+export function findExercise(settings, taskId){ const m = /^w(\d+)-([a-e])$/.exec(taskId||''); if (!m) return null; const w = Number(m[1]); if (w < 1 || w > planInfo(settings).weeks) return null; return exercisesOf(settings, w).find(e => e.slot === m[2]); }

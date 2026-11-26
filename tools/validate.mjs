@@ -3,7 +3,7 @@ import { sectionItems } from '../tasks.js';
 let bad = 0; const err = (w, s, m) => { bad++; console.log(`W${w} ${s}: ${m}`); };
 let nItems = 0, nEx = 0;
 WEEKS.forEach((wk, wi) => { const w = wi+1;
-  for (const slot of ['a','b','c']){ const ex = wk.tasks[slot]; if (!ex){ err(w, slot, 'missing'); continue; } nEx++;
+  for (const slot of ['a','b','c','d','e']){ const ex = wk.tasks[slot]; if (!ex){ err(w, slot, 'missing'); continue; } nEx++;
     ex.sections.forEach((sec, si) => { const tag = `${slot}.${si}(${sec.type})`; const its = sectionItems(sec, si); nItems += its.length;
       for (const it of its){ if (it.type === 'gap'){ if (!it.accepted?.length) err(w, tag, 'no accepted'); } else { if (!Array.isArray(it.options) || it.answer == null || it.answer < 0 || it.answer >= it.options.length) err(w, tag, 'bad answer ' + JSON.stringify(it).slice(0,80)); } }
       if (['cloze','open'].includes(sec.type)){ const m = [...sec.text.matchAll(/\[\[(\d+)\]\]/g)].map(x=>+x[1]); if (m.length !== its.length || m.some((n,i)=>n!==i+1)) err(w, tag, 'gap count mismatch'); }

@@ -1,6 +1,6 @@
 // Exercise renderers. An exercise = list of sections (KET-style tasks). Objective items are auto-checked;
 // writing and speaking are sent to the teacher.
-import { esc, letter, matches, wordCount, icons, recorderSupported, startRecording, $, $$, toast } from './ui.js';
+import { esc, letter, matches, wordCount, icons, recorderSupported, startRecording, $, $$, toast } from './ui.js?v=2';
 
 const PART_LABEL = { signs:'Reading Part 1', match:'Reading Part 2', mcq:'', cloze:'Reading Part 4', open:'Reading Part 5', write:'Writing Part 6', story:'Writing Part 7', lpics:'Listening Part 1', lgap:'Listening Part 2', lmcq:'Listening', lmatch:'Listening Part 5', quiz:'Words & grammar', speak:'Speaking' };
 

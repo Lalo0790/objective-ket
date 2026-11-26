@@ -1,7 +1,7 @@
-import * as db from './db.js';
-import { SKILLS, SLOTS, planInfo, weekStart, weekEnd, reviewDate, weekOf, weekMeta, exercisesOf, findExercise, addDays, todayISO, diffDays, ROADMAP } from './plan.js';
-import { renderTask, bindTask, allItems } from './tasks.js';
-import { $, $$, esc, toast, icons, fmtDate, fmtGrade, wordCount } from './ui.js';
+import * as db from './db.js?v=2';
+import { SKILLS, SLOTS, planInfo, weekStart, weekEnd, reviewDate, weekOf, weekMeta, exercisesOf, findExercise, addDays, todayISO, diffDays, ROADMAP } from './plan.js?v=2';
+import { renderTask, bindTask, allItems } from './tasks.js?v=2';
+import { $, $$, esc, toast, icons, fmtDate, fmtGrade, wordCount } from './ui.js?v=2';
 
 const S = { user:null, settings:null, subs:[], fb:[], reviews:[], cleanup:null };
 const app = $('#app');
@@ -12,35 +12,54 @@ const PHASES = [[1,4,'Starter','Pre-A1 → A1','🌱'],[5,8,'Builder','A1 → A1
 
 // ---------- data ----------
 async function loadAll(){
-  S.settings = await db.getSettings();
-  S.subs = await db.listSubmissions(S.user.role === 'teacher' && S.settings.student_id ? { studentId:S.settings.student_id } : {});
+  S.globalSettings = await db.getSettings();
+  if (S.user.role === 'teacher'){
+    S.students = await db.listStudents();
+    const fallback = S.globalSettings.student_id || S.students[0]?.id;
+    if (!S.selectedStudentId || !S.students.some(s => s.id === S.selectedStudentId)) S.selectedStudentId = fallback;
+    const prof = S.students.find(s => s.id === S.selectedStudentId) || S.students[0] || null;
+    S.settings = db.mergeSettings(S.globalSettings, prof);
+    S.subs = await db.listSubmissions(S.settings.student_id ? { studentId:S.settings.student_id } : {});
+    S.reviews = await db.listWeeklyReviews(S.settings.student_id ? { studentId:S.settings.student_id } : {});
+  } else {
+    S.settings = db.mergeSettings(S.globalSettings, S.user);
+    S.subs = await db.listSubmissions();
+    S.reviews = await db.listWeeklyReviews();
+  }
   S.fb = await db.listItemFeedback(S.subs.map(s => s.id));
-  S.reviews = await db.listWeeklyReviews();
 }
 const subFor = id => S.subs.find(s => s.task_id === id);
 const fbFor = sub => sub && S.fb.find(f => f.submission_id === sub.id);
 const isOpen = (ex) => S.user.role === 'teacher' || ex.date <= todayISO();
 const curWeek = () => { const { weeks } = planInfo(S.settings); return Math.max(1, Math.min(weeks, weekOf(S.settings, todayISO()))); };
-function weekStatus(w){ const exs = exercisesOf(S.settings, w).filter(e => e.ready); const done = exs.filter(e => subFor(e.id)).length; return { exs, done, total:3, ready:exs.length > 0 }; }
+function weekStatus(w){ const exs = exercisesOf(S.settings, w).filter(e => e.ready); const done = exs.filter(e => subFor(e.id)).length; return { exs, done, total: S.settings.exercises_per_week || exs.length || 3, ready:exs.length > 0 }; }
 function weeksDoneStreak(){ let n = 0; for (let w = curWeek(); w >= 1; w--){ const s = weekStatus(w); if (s.ready && s.done === s.exs.length && s.exs.length) n++; else if (w === curWeek()) continue; else break; } return n; }
 const phaseOf = w => PHASES.find(p => w >= p[0] && w <= p[1]) || PHASES[PHASES.length-1];
 const examLabel = () => `${fmtDate(S.settings.exam_date, false)} ${S.settings.exam_date.slice(0,4)}${S.settings.exam_tentative ? ' (tentativa)' : ''}`;
+const studentName = () => (S.students || []).find(s => s.id === (S.selectedStudentId || S.settings?.student_id))?.display_name || S.user?.display_name || 'Alumno';
+const studentFirst = () => studentName().split(' ')[0];
+const perWeek = () => S.settings?.exercises_per_week || 3;
+const planBlurb = () => perWeek() === 5
+  ? 'Cada semana: Reading & Writing, Listening, Speaking, un Reading extra y Writing & Words. Eduardo revisa los viernes.'
+  : '${planBlurb()}';
 const skillChips = ex => ex.skills.map(k => `<span class="chip skill" style="background:${SKILLS[k].color}">${SKILLS[k].label}</span>`).join('');
 
 // ---------- shell ----------
 function shell(inner, tab){
   const teacher = S.user.role === 'teacher'; document.body.classList.toggle('teacher', teacher);
-  const top = `<header class="topbar"><div class="wrap ${teacher?'wide':''}"><a class="brand" href="#/"><span class="mark"></span><b>Objective <i>KET</i></b></a><span class="spacer"></span>${teacher ? `<span class="chip">Profesor</span><a class="iconbtn" href="#/t/settings" title="Ajustes">${icons.gear}</a>` : ''}<button class="iconbtn" id="logout" title="Salir">${icons.out}</button></div></header>`;
+  const sel = teacher && S.students?.length ? `<label class="stusel"><select id="stusel" title="Alumno" aria-label="Alumno">${S.students.map(s => `<option value="${esc(s.id)}" ${s.id===(S.selectedStudentId||S.settings?.student_id)?'selected':''}>${esc(s.display_name)}</option>`).join('')}</select></label>` : '';
+  const top = `<header class="topbar"><div class="wrap ${teacher?'wide':''}"><a class="brand" href="#/"><span class="mark"></span><b>Objective <i>KET</i></b></a><span class="spacer"></span>${teacher ? `${sel}<span class="chip">Profesor</span><a class="iconbtn" href="#/t/settings" title="Ajustes">${icons.gear}</a>` : ''}<button class="iconbtn" id="logout" title="Salir">${icons.out}</button></div></header>`;
   const tabs = teacher ? '' : `<nav class="tabbar"><div class="wrap">${[['/', 'Hoy', icons.home, 'home'],['/plan','Plan',icons.plan,'plan'],['/progress','Progreso',icons.prog,'prog'],['/feedback','Feedback',icons.fb,'fb']].map(([h,l,i,k])=>`<a href="#${h}" class="${tab===k?'on':''}">${i}<span>${l}</span></a>`).join('')}</div></nav>`;
   app.innerHTML = top + `<main class="fade">${inner}</main>` + tabs;
   $('#logout').onclick = async () => { await db.signOut(); S.user = null; location.hash = '#/'; route(); };
+  if (teacher && $('#stusel')) $('#stusel').onchange = async (e) => { S.selectedStudentId = e.target.value; await loadAll(); route(); };
 }
 window.addEventListener('scroll', () => $('.topbar')?.classList.toggle('scrolled', scrollY > 4), { passive:true });
 
 // ---------- login ----------
 function loginView(){
   document.body.classList.remove('teacher');
-  app.innerHTML = `<div class="login fade"><div class="box"><span class="mark big"></span><h1>Objective <i>KET</i></h1><p class="sub">Tu camino al examen Cambridge A2 Key: 3 ejercicios por semana y revisión de tu profe cada viernes.</p>
+  app.innerHTML = `<div class="login fade"><div class="box"><span class="mark big"></span><h1>Objective <i>KET</i></h1><p class="sub">Tu camino al examen Cambridge A2 Key: ejercicios cada semana y revisión de tu profe cada viernes.</p>
   <form id="lf" class="mt2"><label class="field"><span>Usuario</span><input class="input" name="u" autocomplete="username" autocapitalize="off" required placeholder="agustin"></label>
   <label class="field"><span>Contraseña</span><input class="input" type="password" name="p" autocomplete="current-password" required></label>
   <div class="err" id="lerr"></div><button class="btn block coral mt" type="submit">Entrar</button></form>
@@ -66,13 +85,13 @@ function homeView(){
   const h = new Date().getHours(); const greet = h < 12 ? '¡Buenos días' : h < 19 ? '¡Buenas tardes' : '¡Buenas noches';
   let main = '';
   if (w < 1){
-    main = `<div class="card"><span class="eyebrow">Tu plan empieza el ${fmtDate(st.start_date)}</span><h2 class="mt">¡Casi listo! 🚀</h2><p class="sub">Cada semana tendrás 3 ejercicios cortos (15–20 minutos). El primero se abre el lunes. Mientras tanto puedes ver el plan.</p><a class="btn coral mt" href="#/plan">Ver el plan</a></div>`;
+    main = `<div class="card"><span class="eyebrow">Tu plan empieza el ${fmtDate(st.start_date)}</span><h2 class="mt">¡Casi listo! 🚀</h2><p class="sub">Cada semana tendrás ${perWeek()} ejercicios cortos (15–20 minutos). El primero se abre el lunes. Mientras tanto puedes ver el plan.</p><a class="btn coral mt" href="#/plan">Ver el plan</a></div>`;
   } else if (w > weeks){
     main = `<div class="card center"><h2>¡Día del examen! 🎯</h2><p class="sub">Ya entrenaste para esto, ${esc(name)}. ¡Mucha suerte!</p></div>`;
   } else {
     const meta = weekMeta(w); const ws = weekStatus(w); const exs = exercisesOf(st, w);
     if (!meta.ready) main = `<div class="card"><span class="eyebrow">Semana ${w} · ${esc(meta.level)}</span><h2 class="mt">${esc(meta.theme)}</h2><p class="sub">Eduardo todavía está preparando los ejercicios de esta semana. ¡Pronto aparecen aquí!</p></div>`;
-    else main = `<div class="card daycard"><div class="head"><span class="eyebrow">Semana ${w} de ${weeks} · ${esc(meta.level)}</span><h2>${esc(meta.theme)}</h2><div class="small" style="opacity:.8;margin-top:4px">${ws.done}/3 ejercicios · 15–20 min cada uno</div><div class="progressbar"><span style="width:${ws.done/3*100}%"></span></div></div><ul class="tasklist">${exs.map(exRow).join('')}</ul></div>`;
+    else main = `<div class="card daycard"><div class="head"><span class="eyebrow">Semana ${w} de ${weeks} · ${esc(meta.level)}</span><h2>${esc(meta.theme)}</h2><div class="small" style="opacity:.8;margin-top:4px">${ws.done}/${ws.total} ejercicios · 15–20 min cada uno</div><div class="progressbar"><span style="width:${ws.total?ws.done/ws.total*100:0}%"></span></div></div><ul class="tasklist">${exs.map(exRow).join('')}</ul></div>`;
     const rv = S.reviews.find(r => r.week_start === weekStart(st, w)); const rd = reviewDate(st, w);
     main += rv ? `<a class="card flat review-note" href="#/feedback"><span class="em">💬</span><span><b>¡Eduardo ya revisó esta semana!</b><div class="small muted">Toca para ver tu nota y sus comentarios.</div></span></a>`
       : `<div class="card flat review-note"><span class="em">📅</span><span><b>Revisión: ${fmtDate(rd)}</b><div class="small muted">Haz tus ejercicios antes. Ese día Eduardo te deja comentarios y una nota por habilidad.</div></span></div>`;
@@ -124,7 +143,7 @@ function planView(){
     html += meta.ready ? `<a class="card weekcard ${w===cw?'cur':''}" href="#/week/${w}">${inner}</a>` : `<div class="card weekcard soon ${w===cw?'cur':''}">${inner}</div>`;
   }
   html += `<div class="card weekcard exam"><span class="wn">🎯</span><span class="meta"><div class="t">Examen Cambridge A2 Key</div><div class="s">${esc(examLabel())}</div></span></div>`;
-  shell(`<div class="wrap"><section class="hero"><span class="eyebrow">${fmtDate(planInfo(st).w1,false)} → ${fmtDate(st.exam_date,false)}</span><h1 class="mt">Tu plan</h1><p class="sub">Cada semana: 1 de Reading & Writing, 1 de Listening y 1 de Speaking. Eduardo revisa los viernes.</p></section>${html}</div>`, 'plan');
+  shell(`<div class="wrap"><section class="hero"><span class="eyebrow">${fmtDate(planInfo(st).w1,false)} → ${fmtDate(st.exam_date,false)}</span><h1 class="mt">Tu plan</h1><p class="sub">${planBlurb()}</p></section>${html}</div>`, 'plan');
 }
 function progressView(){
   const st = S.settings; const { weeks } = planInfo(st); const cw = curWeek();
@@ -174,17 +193,17 @@ async function teacherWeekView(w){
     days += `<div class="sub-card" data-sub="${s.id}"><div class="row between"><span>${skillChips(e)} <b>${esc(e.title)}</b></span>${s.auto_max ? `<span class="chip" style="background:${s.auto_score/s.auto_max>=.6?'var(--teal-2)':'var(--coral-2)'}">${s.auto_score}/${s.auto_max}</span>` : ''}</div>
     <div class="small muted">Entregado ${new Date(s.updated_at || s.created_at).toLocaleString('es-MX',{dateStyle:'short',timeStyle:'short'})}${s.meta?.plays ? ` · audio ${s.meta.plays}×` : ''} · <a href="#/task/${e.id}">ver ejercicio</a></div>
     ${items}${text}${audio}
-    <div class="row mt" style="align-items:flex-start"><textarea class="input fbc" style="min-height:${open?90:56}px;flex:1" placeholder="Comentario para Agustín…">${esc(f.comment||'')}</textarea>${open ? `<select class="input fbb" style="width:86px">${GRADES.map(b=>`<option ${Number(f.grade)===Number(b)&&b?'selected':''} value="${b}">${b||'Nota'}</option>`).join('')}</select>` : ''}</div>
+    <div class="row mt" style="align-items:flex-start"><textarea class="input fbc" style="min-height:${open?90:56}px;flex:1" placeholder="Comentario para ${esc(studentFirst())}…">${esc(f.comment||'')}</textarea>${open ? `<select class="input fbb" style="width:86px">${GRADES.map(b=>`<option ${Number(f.grade)===Number(b)&&b?'selected':''} value="${b}">${b||'Nota'}</option>`).join('')}</select>` : ''}</div>
     <div class="row mt"><button class="btn small savefb">Guardar comentario</button><span class="small muted saved">${f.updated_at ? 'Guardado' : ''}</span></div></div></section>`; }
   const stt = weekStats(w);
   const side = `<div class="card side"><h2>Revisión semana ${w}</h2><p class="sub small">Viernes ${fmtDate(reviewDate(st,w), false)} · ${stt.done}/${stt.planned} ejercicios entregados</p>
     <div class="small mt">${Object.entries(autoBy).map(([k,[a,b]])=>`<span class="chip" style="margin:2px">${SKILL_ES[k]}: ${Math.round(a/b*100)}%</span>`).join('') || '<span class="muted">Sin respuestas automáticas aún</span>'}</div>
     <p class="small muted mt">Notas del 1 al 10 · 10 excelente · 8 muy bien · 6 va bien · 5 o menos: reforzar.</p>
     <form id="rf" class="mt">${SKILL_KEYS.map(k=>`<div class="row" style="margin:10px 0;align-items:flex-start"><label style="width:88px;font-weight:700;color:${SKILLS[k].color};padding-top:12px">${SKILL_ES[k]}</label><select class="input" name="grade_${k}" style="width:84px">${GRADES.map(b=>`<option value="${b}" ${rev['grade_'+k]!=null && Number(rev['grade_'+k])===Number(b) && b ? 'selected':''}>${b||'—'}</option>`).join('')}</select><input class="input" name="comment_${k}" style="flex:1;min-width:140px" placeholder="Comentario breve" value="${esc(rev['comment_'+k]||'')}"></div>`).join('')}
-    <label class="field"><span>Comentario general para Agustín</span><textarea class="input" name="summary" style="min-height:120px">${esc(rev.summary||'')}</textarea></label>
-    <label class="row small"><input type="checkbox" name="published" ${rev.published === false ? '' : 'checked'}> Visible para Agustín</label>
+    <label class="field"><span>Comentario general para ${esc(studentFirst())}</span><textarea class="input" name="summary" style="min-height:120px">${esc(rev.summary||'')}</textarea></label>
+    <label class="row small"><input type="checkbox" name="published" ${rev.published === false ? '' : 'checked'}> Visible para ${esc(studentFirst())}</label>
     <button class="btn coral block mt" type="submit">Guardar revisión semanal</button><div class="small muted center mt">${rev.updated_at ? 'Última vez: '+new Date(rev.updated_at).toLocaleString('es-MX',{dateStyle:'short',timeStyle:'short'}) : ''}</div></form></div>`;
-  shell(`<div class="wrap wide"><section class="hero"><span class="eyebrow">Panel del profesor</span><h1 class="mt">Semana ${w} de ${weeks} · ${esc(meta.theme)}</h1><p class="sub">Alumno: Agustín · A2 Key ${S.settings.exam_kind === 'schools' ? 'for Schools' : ''} · examen ${esc(examLabel())}</p></section>
+  shell(`<div class="wrap wide"><section class="hero"><span class="eyebrow">Panel del profesor</span><h1 class="mt">Semana ${w} de ${weeks} · ${esc(meta.theme)}</h1><p class="sub">Alumno: ${esc(studentName())} · ${perWeek()} ejercicios/semana · A2 Key ${S.settings.exam_kind === 'schools' ? 'for Schools' : ''} · examen ${esc(examLabel())}</p></section>
     <nav class="weekpick">${Array.from({length:weeks},(_,i)=>i+1).map(i=>{ const s = weekStats(i); const r = S.reviews.find(x=>x.week_start===weekStart(st,i)); return `<a href="#/t/week/${i}" class="${i===w?'on':''}">S${i} <span style="opacity:.6;font-weight:500">${s.done}/${s.planned}</span>${r?'<span class="rv"></span>':''}</a>`; }).join('')}</nav>
     ${meta.ready ? `<div class="tgrid two"><div>${days}</div>${side}</div>` : '<div class="card empty">Los ejercicios de esta semana todavía no están escritos.</div>'}</div>`, '');
   $$('audio[data-audio]').forEach(async a => { a.src = await db.audioUrl(a.dataset.audio); });
@@ -194,13 +213,13 @@ async function teacherWeekView(w){
     catch(e){ console.error(e); toast('No se pudo guardar'); } b.disabled = false; });
   if (meta.ready) $('#rf').onsubmit = async (e) => { e.preventDefault(); const f = new FormData(e.target); const row = { student_id: st.student_id, week_start: ws, published: !!f.get('published'), summary: f.get('summary') };
     SKILL_KEYS.forEach(k => { row['grade_'+k] = f.get('grade_'+k); row['comment_'+k] = f.get('comment_'+k); });
-    try { const saved = await db.saveWeeklyReview(row); const i = S.reviews.findIndex(r => r.week_start === ws); if (i>=0) S.reviews[i] = saved; else S.reviews.push(saved); toast('Revisión semanal guardada ✓'); teacherWeekView(w); }
+    try { const saved = await db.saveWeeklyReview(row); const i = S.reviews.findIndex(r => r.week_start === ws && r.student_id === st.student_id); if (i>=0) S.reviews[i] = saved; else S.reviews.push(saved); toast('Revisión semanal guardada ✓'); teacherWeekView(w); }
     catch(err){ console.error(err); toast('No se pudo guardar la revisión'); } };
 }
 function teacherSettingsView(){
-  const st = S.settings; const days = (st.study_days || [1,3,4]).map(Number); const NAMES = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
-  shell(`<div class="wrap"><div class="taskhead"><a class="back" href="#/t">${icons.left} Panel</a><h1>Ajustes del plan</h1><p class="sub">Las semanas van de lunes a domingo y la revisión es el viernes. Si el inicio cae a media semana, la semana 1 es más larga: la primera revisión es el viernes de la semana siguiente. Si cambias fechas, las semanas se reacomodan.</p></div>
-  <form class="card" id="sf"><label class="field"><span>Fecha de inicio</span><input class="input" type="date" name="start_date" value="${st.start_date}" required></label>
+  const st = S.globalSettings || S.settings; const days = (st.study_days || [1,3,4]).map(Number); const NAMES = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+  shell(`<div class="wrap"><div class="taskhead"><a class="back" href="#/t">${icons.left} Panel</a><h1>Ajustes del plan</h1><p class="sub">Estas fechas y días son el plan por defecto (Agustín: 3 ejercicios por semana, inicio el 19 nov). Eduardo Zamorano tiene su propio inicio el 26 nov 2026 y 5 ejercicios (lun–vie); eso no se cambia aquí. Las semanas van de lunes a domingo y la revisión es el viernes. Si el inicio cae a media semana, la semana 1 es más larga: la primera revisión es el viernes de la semana siguiente.</p></div>
+  <form class="card" id="sf"><label class="field"><span>Fecha de inicio (plan por defecto)</span><input class="input" type="date" name="start_date" value="${st.start_date}" required></label>
   <label class="field"><span>Fecha del examen</span><input class="input" type="date" name="exam_date" value="${st.exam_date}" required></label>
   <label class="row small" style="margin-bottom:10px"><input type="checkbox" name="exam_tentative" ${st.exam_tentative ? 'checked' : ''}> La fecha del examen es tentativa</label>
   <div class="field"><span>Días de estudio (elige 3: Reading & Writing · Listening · Speaking)</span><div class="row">${NAMES.map((n,i)=>`<label class="pill ${days.includes(i+1)?'on':''}" style="display:inline-flex;gap:6px;align-items:center"><input type="checkbox" name="d${i+1}" ${days.includes(i+1)?'checked':''}> ${n}</label>`).join('')}</div></div>
@@ -210,8 +229,12 @@ function teacherSettingsView(){
   $('#sf').onsubmit = async (e) => { e.preventDefault(); const fd = new FormData(e.target); const f = Object.fromEntries(fd);
     const sd = [1,2,3,4,5,6,7].filter(i => fd.get('d'+i)); if (sd.length !== 3){ toast('Elige exactamente 3 días de estudio'); return; }
     if (f.exam_date <= f.start_date){ toast('El examen debe ser después del inicio'); return; }
-    try { S.settings = await db.saveSettings({ start_date:f.start_date, exam_date:f.exam_date, exam_tentative: !!fd.get('exam_tentative'), study_days: sd, exam_kind:f.exam_kind }); toast('Ajustes guardados ✓'); }
-    catch(err){ console.error(err); toast('No se pudieron guardar'); } };
+    try {
+      S.globalSettings = await db.saveSettings({ start_date:f.start_date, exam_date:f.exam_date, exam_tentative: !!fd.get('exam_tentative'), study_days: sd, exam_kind:f.exam_kind });
+      const prof = (S.students || []).find(s => s.id === S.selectedStudentId);
+      S.settings = db.mergeSettings(S.globalSettings, prof || S.user);
+      toast('Ajustes guardados ✓');
+    } catch(err){ console.error(err); toast('No se pudieron guardar'); } };
 }
 
 // ---------- router ----------

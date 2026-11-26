@@ -283,3 +283,8 @@ details.guide summary{color:var(--teal)}
 .story .em.e2{font-size:2rem}.story .em.e3{font-size:1.7rem}.story .em.e4{font-size:1.4rem}
 .task .s{white-space:normal}
 .story .em{letter-spacing:0}.story .em.e3{font-size:1.4rem}.story .em.e2{font-size:1.9rem}.story .em.e4{font-size:1.1rem}
+
+/* Teacher student switcher in the top bar */
+.stusel{display:flex;align-items:center}
+.stusel select{width:auto;max-width:220px;padding:6px 12px;font-size:.82rem;font-weight:700;border-radius:99px;border:1.5px solid var(--line);background:var(--paper-2);font-family:inherit;color:var(--ink)}
+.stusel select:focus{border-color:var(--ink);outline:none}

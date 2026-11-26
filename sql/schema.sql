@@ -3,7 +3,10 @@ create table if not exists public.ket_profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   role text not null check (role in ('student','teacher')),
   display_name text not null,
-  created_at timestamptz default now()
+  created_at timestamptz default now(),
+  exercises_per_week int not null default 3 check (exercises_per_week in (3, 5)),
+  start_date date,
+  study_days int[]
 );
 
 create or replace function public.ket_is_teacher() returns boolean
@@ -118,3 +121,14 @@ create policy ket_p_audio_read on storage.objects for select to authenticated
   using (bucket_id = 'ket-speaking' and ((storage.foldername(name))[1] = auth.uid()::text or public.ket_is_teacher()));
 
 insert into ket_settings (id) values (1) on conflict do nothing;
+
+-- Per-student plan (for databases created before these columns existed).
+-- Null start_date / study_days fall back to ket_settings (id=1). Do not overwrite that shared row with another student's dates.
+alter table public.ket_profiles add column if not exists exercises_per_week int not null default 3;
+alter table public.ket_profiles add column if not exists start_date date;
+alter table public.ket_profiles add column if not exists study_days int[];
+do $$ begin
+  if not exists (select 1 from pg_constraint where conname = 'ket_profiles_exercises_per_week_check') then
+    alter table public.ket_profiles add constraint ket_profiles_exercises_per_week_check check (exercises_per_week in (3, 5));
+  end if;
+end $$;
